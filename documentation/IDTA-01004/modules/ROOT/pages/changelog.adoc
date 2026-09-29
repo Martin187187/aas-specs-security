@@ -19,6 +19,7 @@ Bugfixes:
 
 Minor Changes:
 
+* added: Expanded the informative DPP annex with security capability mappings, illustrative Battery Passport access rules, deployment and read/update workflow diagrams, and references for DPP requirements and HTTP Message Signatures.
 * Improved documentation of access rule examples
 * new access rule examples for DPP related rules, access rule 10 updated to better reflect the purpose
 

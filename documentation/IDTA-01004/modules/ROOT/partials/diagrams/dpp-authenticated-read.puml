@@ -1,0 +1,22 @@
+@startuml
+' Copyright (c) 2026 Industrial Digital Twin Association
+' SPDX-License-Identifier: CC-BY-4.0
+
+skinparam shadowing false
+skinparam ArrowColor #444444
+hide footbox
+
+actor "Authenticated requester" as User
+participant "DPP service" as DPP #FFF2CC
+participant "DPP IAM" as IAM #FFF2CC
+participant "AAS service" as AAS #D9EAF7
+
+User -> DPP : Read DPP by product ID\nAccept-Signature (optional)
+DPP -> IAM : Authenticate requester
+IAM --> DPP : AAS access token for role
+DPP -> AAS : Read DPP data with token
+AAS -> AAS : Authorize properties for role
+AAS --> DPP : DPP data
+DPP -> DPP : Sign response only when requested
+DPP --> User : DPP data\nContent-Digest + Signature-Input + Signature (when requested)
+@enduml

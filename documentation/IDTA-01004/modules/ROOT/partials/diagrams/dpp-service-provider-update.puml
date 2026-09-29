@@ -1,0 +1,18 @@
+@startuml
+' Copyright (c) 2026 Industrial Digital Twin Association
+' SPDX-License-Identifier: CC-BY-4.0
+
+skinparam shadowing false
+skinparam ArrowColor #444444
+hide footbox
+
+actor "External DPP\nservice provider" as Provider
+participant "IAM trusted by the\neconomic operator AAS" as IAM #FFF2CC
+participant "Economic-operator\nAAS service" as AAS #D9EAF7
+
+Provider -> IAM : Obtain authenticated AAS token
+IAM --> Provider : Token for DPP service-provider role\nwith update authorization when applicable
+Provider -> AAS : Read DPP Submodels or update\nProduct Condition data with token
+AAS -> AAS : Validate trusted issuer and authorize\nREAD or restricted UPDATE
+AAS --> Provider : Requested or updated AAS data
+@enduml

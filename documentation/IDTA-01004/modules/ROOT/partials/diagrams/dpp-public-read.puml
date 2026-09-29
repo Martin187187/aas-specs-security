@@ -1,0 +1,19 @@
+@startuml
+' Copyright (c) 2026 Industrial Digital Twin Association
+' SPDX-License-Identifier: CC-BY-4.0
+
+skinparam shadowing false
+skinparam ArrowColor #444444
+hide footbox
+
+actor "Public user" as User
+participant "DPP service" as DPP #FFF2CC
+participant "AAS service" as AAS #D9EAF7
+
+User -> DPP : Read DPP by product ID\nAccept-Signature (optional)
+DPP -> AAS : Read public DPP data without access token
+AAS -> AAS : Apply GLOBAL(ANONYMOUS) rule\nand authorize public properties
+AAS --> DPP : DPP data
+DPP -> DPP : Sign response only when requested
+DPP --> User : DPP data\nContent-Digest + Signature-Input + Signature (when requested)
+@enduml
