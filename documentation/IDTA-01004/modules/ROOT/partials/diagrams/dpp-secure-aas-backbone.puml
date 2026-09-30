@@ -29,14 +29,14 @@ package "External verification context" as ExternalArea {
 }
 
 package "DPP-on-AAS integration capabilities" as DPPArea {
-  component "DPP IAM\n--\nAuthenticate\nIssue AAS token" as DPPIam <<DPPIntegration>>
-  component "DPP service\n--\nResolve product ID\nCompose DPP\nTraceability and signing\nVerification and recovery" as DPPService <<DPPIntegration>>
+  component "DPP IAM\n--\nAuthenticate requester or\naccept trusted identity\nIssue AAS token" as DPPIam <<DPPIntegration>>
+  component "DPP service\n--\nResolve product ID\nCompose DPP\nRecord changes\nSign responses (proposal)\nSupport verification and recovery" as DPPService <<DPPIntegration>>
 
   DPPIam -down-> DPPService
 }
 
 package "AAS-defined capabilities" as AASArea {
-  component "AAS protection\n--\nAuthentication\nAccess Rules" as Security <<AAS>>
+  component "AAS protection\n--\nValidate access tokens\nand trusted claims\nEvaluate Access Rules" as Security <<AAS>>
   component "AAS resources and services\n--\nProtected read and write" as AASResources <<AAS>>
 
   Security -right-> AASResources

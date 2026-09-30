@@ -24,16 +24,10 @@ To support the implementation of digital product passports (DPPs), 8 standards h
 * EN 18239:2026 – Digital Product Passport – Access rights management, information system security, and business confidentiality
 * EN 18246:2026 – Digital Product Passport – Data authentication, reliability and integrity
 
-This annex specifies how the requirements as specified in
-
-* EN 18239:2026 - Digital product passport - Access rights management, information system security and business confidentiality
-* EN 18246:2026 – Digital Product Passport – Data authentication, reliability and integrity
-
-are mapped or realized in the context of an Asset Administration Shell (AAS) system.
-
-The annex covers integrity and authenticity, attributable change history, auditability and traceability, tamper detection, retention, historical retrieval, and recovery.
-It distinguishes AAS capabilities, DPP-specific integration responsibilities, and external DPP services and requirements.
-
+This informative annex describes how an Asset Administration Shell (AAS) system can support DPP access control, data authenticity, change history, and recovery.
+It relates these concerns to existing AAS capabilities and proposes integration measures for DPP services.
+The access rules and workflows are examples. The HTTP response-signing approach is a proposal in this annex, not an established AAS API convention or a requirement attributed to EN 18239 or EN 18246.
+Conformity with the referenced standards requires a separate assessment.
 
 == Regulatory and specification context
 
@@ -76,19 +70,19 @@ h| DPP security concern h| Existing AAS security capability h| DPP-specific inte
 
 | Controlled access and confidentiality
 | The Access Rule Model expresses authorization for API routes, Identifiables, Referables, fragments, and descriptors. Part 4 also addresses authentication, confidentiality, and filtering of protected information.
-| DPP authorization is enforced entirely through the AAS Access Rule Model. The DPP integration maps a DPP request to AAS API calls but makes no additional authorization decision. The AAS Access Rules authorize each affected resource and property; public and controlled information can coexist in one DPP.
+| In the illustrated access model, the DPP service maps requests to AAS API calls and the AAS Access Rules authorize the affected resources and properties. This depends on the AAS calls carrying the identity and authority relevant to the request. Public and controlled information can coexist in one DPP.
 
 | Attributable changes and accountability
 | Part 4 requires link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_auditable_events[auditable security and accountability events], link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_timestamps[timestamps], link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_non_repudiation[accountability information], and link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_information_integrity[protection of stored AAS information against tampering].
-| A DPP-relevant change is related to the authenticated actor, represented organization, effective operation, authorization decision, applicable policy version, resulting resource version, and retained evidence.
+| An audit record can associate a DPP change with the authenticated actor, represented organization, operation, authorization decision, policy version, and resulting resource version.
 
 | Authenticity and composition integrity
 | The link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01002/v3.2/signatures.html[Part 2 signature endpoints] provide data-bound integrity and authenticity for a returned AAS representation. They are not DPP endpoints and do not sign a composed DPP response.
-| A DPP read response can be signed on request with the DPP HTTP Message Signature convention defined in Part 2. The signature binds the response status, type, and content digest to the originating read request. A composition manifest identifies the exact resources and files included in a composed DPP.
+| The <<dpp-response-signing,proposed HTTP response-signing approach>> binds a DPP response to its read request. If the response also needs to identify its source resources and files, a composition manifest could record their identifiers, versions, and digests; its format is outside this annex.
 
 | Historical versions and tamper evidence
 | The link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01002/v3.2/specification/interfaces.html[Part 2 version operations], link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_timestamps[timestamp] information, and link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_auditable_events[Part 4 audit events] provide inputs for identifying changes and selecting relevant resource states. Part 4 does not define audit storage.
-| Historical versions and evidence are retained so that unauthorized modification, replacement, deletion, reordering, omission, or conflict can be detected independently of the mutable live data.
+| Detecting changes to history requires retained versions and evidence protected independently of the mutable live data. Signing a historical read response alone does not establish that the history is complete or unchanged.
 
 | Retention, continuity, and recovery
 | Part 4 addresses authorization, auditability, link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_information_integrity[integrity], and link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01004/v3.1/requirements.html#_aas_recovery_and_reconstitution[recovery-related currentness information] for AAS resources.
@@ -96,14 +90,16 @@ h| DPP security concern h| Existing AAS security capability h| DPP-specific inte
 
 | External verification context
 | AAS identifiers, descriptors, semantic identifiers, and identity attributes relate AAS resources to their external context.
-| Registration, product and identifier status, semantic-model versions, organizational authority, credential status, and trust information remain associated with the DPP version for which they are relevant.
+| Verification of an earlier DPP version may require the registration, semantic-model versions, organizational authority, credential status, and trust information applicable at that time.
 |===
 
 === Authentication and AAS authorization
 
-Authentication and access-token issuance are outside this annex. A DPP implementation can accept an identity from a trusted source, for example an EU Digital Identity Wallet, and map it to the claims used by the AAS. This annex does not define the wallet protocol, identity federation, or claim mapping.
+The protocols for authenticating a requester and issuing an access token are outside this annex. A requester can be a person or a client application. The DPP IAM can authenticate that requester or accept an identity from a trusted source, for example an EU Digital Identity Wallet, and issue a token with claims used by the AAS. This annex does not define the wallet protocol, identity federation, or claim mapping.
 
-Authorization is performed entirely by the AAS Access Rule Model. The DPP service resolves the product identifier and maps the DPP request to AAS API calls; it makes no authorization decision. Each authenticated AAS call is authorized using its access token and the Access Rules for the affected resource or property. A public AAS call that relies on `GLOBAL(ANONYMOUS)` is made without an access token.
+The AAS interface validates the access token and its trusted claims before using them to evaluate Access Rules; see xref:../access-rule-model.adoc#access-tokens[Access Tokens]. This authenticates the identity attributes used for access control. It does not establish the authenticity of the returned DPP data, which is addressed separately in <<dpp-response-signing>>.
+
+In the illustrated access model, the AAS Access Rule Model performs authorization. The DPP service resolves the product identifier and maps the request to AAS API calls without a separate authorization decision. For a request made on behalf of another actor, the AAS needs claims and resource scopes that express that actor's authority. A provider token with broader permissions does not preserve the original requester's restrictions by itself. A public AAS call that relies on `GLOBAL(ANONYMOUS)` is made without an access token.
 
 === Illustrative Battery Passport access rules
 
@@ -246,6 +242,8 @@ ACCESSRULE:
 
 The first four rules are stakeholder examples: public read, recycler read, delegated recycler update, and market-surveillance-authority read. The public policy grants neither `UPDATE` nor anonymous access to `GetAllSubmodels`. A DPP service that handles a public request calls the AAS without an access token and reads only Submodels authorized by their semantics. The recycler update example is limited to the instance-level Product Condition Submodel and additionally requires a trusted `DppUpdateAuthorized` claim. A recycler role alone does not grant update authority. The economic operator remains responsible for the Battery Passport information and can authorize another operator to act on its behalf.
 
+The `DppUpdateAuthorized` example checks a permission flag and a Submodel semantic identifier; it does not identify the products covered by a delegation. A deployment also needs to restrict the selected objects to those products.
+
 The remaining rules cover three alternative deployments. An implementation configures only the rules and roles for its deployment:
 
 . In scenario A, the economic operator hosts the AAS and an external DPP service provider accesses it. The provider obtains an access token from an IAM trusted by the economic operator's AAS. The example grants the provider `READ` on the illustrated DPP Submodels and `UPDATE` only on the Product Condition Submodel when the token also carries the trusted `DppUpdateAuthorized` claim. An implementation that delegates the original requester's token or claims can apply the requester-specific rules instead.
@@ -259,7 +257,7 @@ The standard AAS route literals remain `/submodels` for collection operations an
 <<image-dpp-secure-aas-backbone>> distinguishes AAS-defined capabilities, DPP-on-AAS integration capabilities, and capabilities supplied by the wider DPP environment.
 The elements represent logical security responsibilities and relationships, not deployable components, database products, or trust boundaries.
 
-.Informative capability mapping for verifiable DPP history
+.Informative mapping of AAS and DPP security responsibilities
 [[image-dpp-secure-aas-backbone]]
 [plantuml,dpp-secure-aas-backbone,svg]
 ....
@@ -271,16 +269,39 @@ Gray denotes external legislation, DPP requirements, registration, identity, sem
 An implementation can combine or distribute these capabilities while preserving their security relationships.
 
 DPP-specific responsibilities can be implemented in the DPP service or in supporting components.
-The DPP IAM can accept a trusted identity, for example from an EU Digital Identity Wallet, and issue an AAS token; its incoming identity interface is implementation-specific.
-The DPP service maps product-ID requests to AAS calls and composes the DPP. Where applicable, it also provides DPP-wide traceability, response signing or sealing, integrity evidence, support for independent verification, and recovery coordination.
+The DPP IAM authenticates the requester or accepts a trusted identity, then issues an AAS access token. The token is used by the DPP service when calling the AAS.
 
-For native DPP read responses, the DPP service implements the HTTP Message Signature convention defined in the Part 2 DPP annex. The requester opts in with `Accept-Signature`; an unsigned read is returned when this field is absent. When the request is accepted, `Content-Digest`, `Signature-Input`, and `Signature` bind the returned content and response context to the originating read request according to RFC 9421 and RFC 9530 xref:../bibliography.adoc#bib25[[25\]] xref:../bibliography.adoc#bib26[[26\]]. Signing is not selected through a `/$sign` or `/$signed` DPP endpoint.
+The blue boxes separate the access-control checks from the resources and operations they protect:
 
-This annex does not specify an evidence format, storage model, retention period, verification procedure, or recovery process. Such details are determined by the applicable DPP requirements and the implementation.
+* *AAS protection* validates access tokens and trusted claims, then evaluates Access Rules for the requested operation and objects. Public requests are evaluated against the applicable anonymous-access rules.
+* *AAS resources and services* provide the protected read and write operations, for example reading a Submodel or updating a Product Condition property. The AAS interface enforces the access decision before returning protected data or applying a change.
+
+The arrows show dependencies: the DPP context supplies identity and trust information; the IAM supplies tokens; DPP calls pass through AAS protection to reach AAS resources. These functions can be implemented within the same service.
+
+The DPP service resolves a product identifier, calls the AAS services, and composes the returned data into a DPP. The link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01002/v3.2/annex/dpp.html[Part 2 DPP annex] describes the mapping of DPP operations from EN 18222 to AAS services. The HTTP response-signing proposal below is defined here, separately from that mapping.
+
+The DPP service can associate changes with audit records, provide signatures for response verification, and coordinate recovery from retained versions and backups. The applicable DPP requirements determine which records and versions need to be retained. This annex does not define an evidence format, retention period, or recovery procedure.
+
+[[dpp-response-signing]]
+=== Proposed HTTP response signing (informative)
+
+This proposal uses HTTP Message Signatures (RFC 9421) and Content-Digest (RFC 9530) to let a requester verify the origin and integrity of a native DPP read response xref:../bibliography.adoc#bib25[[25\]] xref:../bibliography.adoc#bib26[[26\]]. It describes one implementation approach for a DPP service. It does not establish conformity with EN 18246 or replace its requirements for electronically signed data constructs.
+
+The requester asks the DPP service for data. The DPP service retrieves the authorized data from AAS services, composes the response, and acts as its signer. Public users and authenticated requesters can both request a signed response. The signature identifies the DPP service as signer; it does not by itself prove that the original data publisher signed the data or that the product statements are correct.
+
+In this proposal, the requester opts in with `Accept-Signature`. Without that field, the DPP service returns an unsigned read response. This opt-in behavior is a choice of the proposal; RFC 9421 also permits unsolicited signatures.
+
+For an accepted signature request, the DPP service computes `Content-Digest` over the returned content. It includes that field, the response status and content type, and the originating request's method and target URI in the signature coverage. Request components use the RFC 9421 `;req` parameter. `Signature-Input` identifies the covered components and signature parameters; `Signature` carries the signature value. The presence of these fields alone is not sufficient: the requester verifies both the signature with a trusted key and the digest against the received content.
+
+An interoperable profile also needs to specify supported algorithms, signer-key discovery and trust, freshness and replay checks, cache handling, and the response to an unsupported signature request. These choices remain open in this proposal; the workflow diagrams show successful requests only.
+
+For later verification, a requester can retain the response content, the signature fields, all covered request and response components, and the necessary key and trust evidence. This choice does not replace any retention duties of the economic operator or service provider. A signature on a historical read response establishes what the service returned at retrieval time; it does not by itself prove that the historical record has remained unchanged.
+
+The proposal uses the normal DPP read endpoints, without adding `/$sign` or `/$signed` DPP endpoints. The AAS `/$signed` endpoints described in link:https://industrialdigitaltwin.io/aas-specifications/IDTA-01002/v3.2/signatures.html[Part 2 Signatures] return signed AAS representations; they do not sign the composed DPP response.
 
 == DPP use-case workflows
 
-The diagrams show the requester, DPP-facing components, and AAS authorization point. The DPP service performs the DPP-specific responsibilities applicable to each workflow.
+The diagrams illustrate the requester, DPP-facing components, and AAS authorization point. The read diagrams use the <<dpp-response-signing,proposed HTTP response-signing approach>>. Authentication exchanges are schematic; they do not prescribe an identity protocol.
 
 .Public access: read DPP by product ID
 [[image-dpp-public-read]]
