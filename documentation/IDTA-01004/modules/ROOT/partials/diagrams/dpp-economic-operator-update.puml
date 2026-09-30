@@ -15,7 +15,7 @@ User -> DPP : Create, read, or update DPP data
 DPP -> IAM : Authenticate tenant economic operator
 IAM --> DPP : AAS token with role and tenant claim
 DPP -> AAS : Create, read, or update tenant AAS data\nwith trusted token
-AAS -> AAS : Select tenant partition and authorize\nCREATE, READ, or UPDATE
+AAS -> AAS : Select trusted tenant partition\nExample 7: check role and tenant;\nauthorize CREATE, READ, or UPDATE
 AAS --> DPP : Requested or changed tenant data
 DPP --> User : DPP result
 @enduml

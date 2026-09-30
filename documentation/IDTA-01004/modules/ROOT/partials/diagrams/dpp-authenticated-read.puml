@@ -19,7 +19,7 @@ User -> DPP : Read DPP by product ID\nAccept-Signature (optional)
 DPP -> IAM : Authenticate requester
 IAM --> DPP : AAS access token for role
 DPP -> AAS : Read DPP data with token
-AAS -> AAS : Validate access token and trusted claims\nAuthorize requested properties
+AAS -> AAS : Validate access token and trusted claims\nExample 2 (recycler) or 4 (authority):\nRead permitted Submodels
 AAS --> DPP : DPP data
 DPP -> DPP : Sign response only when requested
 DPP --> User : DPP data\nContent-Digest + Signature-Input + Signature (when requested)

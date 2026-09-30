@@ -19,7 +19,7 @@ Bugfixes:
 
 Minor Changes:
 
-* added: Expanded the informative DPP annex with AAS security mappings, illustrative Battery Passport access rules, deployment and read/update workflows, and a proposed HTTP response-signing approach distinct from the referenced DPP requirements.
+* added: Expanded the informative DPP annex with AAS security mappings, illustrative Battery Passport access rules grouped by use case and linked to deployment and read/update workflows, and a proposed HTTP response-signing approach distinct from the referenced DPP requirements.
 * Improved documentation of access rule examples
 * new access rule examples for DPP related rules, access rule 10 updated to better reflect the purpose
 

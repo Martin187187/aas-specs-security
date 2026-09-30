@@ -16,7 +16,7 @@ participant "AAS service" as AAS #D9EAF7
 
 User -> DPP : Read DPP by product ID\nAccept-Signature (optional)
 DPP -> AAS : Read public DPP data without access token
-AAS -> AAS : Apply GLOBAL(ANONYMOUS) rule\nand authorize public properties
+AAS -> AAS : Example 1: apply GLOBAL(ANONYMOUS)\nRead permitted Submodels
 AAS --> DPP : DPP data
 DPP -> DPP : Sign response only when requested
 DPP --> User : DPP data\nContent-Digest + Signature-Input + Signature (when requested)

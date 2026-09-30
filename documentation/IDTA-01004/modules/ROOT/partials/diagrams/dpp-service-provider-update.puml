@@ -12,7 +12,13 @@ participant "Economic-operator\nAAS service" as AAS #D9EAF7
 
 Provider -> IAM : Obtain authenticated AAS token
 IAM --> Provider : Token for DPP service-provider role\nwith update authorization when applicable
-Provider -> AAS : Read DPP Submodels or update\nProduct Condition data with token
-AAS -> AAS : Validate trusted issuer and authorize\nREAD or restricted UPDATE
-AAS --> Provider : Requested or updated AAS data
+alt Read DPP data
+  Provider -> AAS : Read DPP Submodels with token
+  AAS -> AAS : Validate trusted token\nExample 5: authorize READ
+  AAS --> Provider : Permitted DPP data
+else Update Product Condition
+  Provider -> AAS : Update Product Condition with token
+  AAS -> AAS : Validate trusted token\nExample 6: check update permission\nand delegated object scope
+  AAS --> Provider : Updated Product Condition data
+end
 @enduml

@@ -25,7 +25,7 @@ alt Authenticated access
 else Public access
   DPP -> AAS : Read public historic DPP data\nwithout access token
 end
-AAS -> AAS : Authorize and retrieve version
+AAS -> AAS : Authorize read: example 1 (public),\n2 (recycler), or 4 (authority)\nRetrieve selected version
 AAS --> DPP : Historic DPP data
 DPP -> DPP : Sign response only when requested
 DPP --> User : Historic DPP data\nContent-Digest + Signature-Input + Signature (when requested)

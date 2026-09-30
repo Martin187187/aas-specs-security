@@ -101,11 +101,35 @@ The AAS interface validates the access token and its trusted claims before using
 
 In the illustrated access model, the AAS Access Rule Model performs authorization. The DPP service resolves the product identifier and maps the request to AAS API calls without a separate authorization decision. For a request made on behalf of another actor, the AAS needs claims and resource scopes that express that actor's authority. A provider token with broader permissions does not preserve the original requester's restrictions by itself. A public AAS call that relies on `GLOBAL(ANONYMOUS)` is made without an access token.
 
+[[dpp-access-rule-examples]]
 === Illustrative Battery Passport access rules
 
-The following Submodel-level rules are examples of Battery Passport access control using the AAS Access Rule Model. Applicable legislation determines which actors can read or modify which data; these examples do not define a general Battery Passport policy.
+The following examples use the AAS Access Rule Model to grant access to Battery Passport Submodels or Submodel-repository routes. Applicable legislation determines which actors can read or modify which data; these examples do not define a general Battery Passport policy.
 
-The examples use the primary `semanticId` values of published Battery Passport Submodel Templates: link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-1/1.0/index.html[IDTA-02035-1 Digital Nameplate], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-3/1.0/index.html[IDTA-02035-3 Product Carbon Footprint], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-4/1.0.1/index.html[IDTA-02035-4 Technical Data], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-5/1.0.1/index.html[IDTA-02035-5 Product Condition], and link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02-035-7/1.0.1/index.html[IDTA-02035-7 Circularity]. `IDENTIFIABLE $sm("*")` selects candidate Submodels without relying on their instance identifiers or `idShort` paths; `$sm#semanticId` then restricts the rule to instances of the intended templates. The templates define data semantics, not regulatory access classes. A deployment therefore verifies the illustrative grouping against the applicable access-rights specification. If different access classes coexist within one Submodel, the deployment defines finer `REFERABLE` or filter rules for the affected SubmodelElements instead of granting the entire Submodel.
+The examples use the primary `semanticId` values of published Battery Passport Submodel Templates: link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-1/1.0/index.html[IDTA-02035-1 Digital Nameplate], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-3/1.0/index.html[IDTA-02035-3 Product Carbon Footprint], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-4/1.0.1/index.html[IDTA-02035-4 Technical Data], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-5/1.0.1/index.html[IDTA-02035-5 Product Condition], and link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02-035-7/1.0.1/index.html[IDTA-02035-7 Circularity].
+
+`IDENTIFIABLE $sm("*")` selects candidate Submodels without relying on their instance identifiers or `idShort` paths; `$sm#semanticId` then restricts the rule to instances of the intended templates. The templates define data semantics, not regulatory access classes. A deployment therefore verifies the illustrative grouping against the applicable access-rights specification. If different access classes coexist within one Submodel, the deployment defines finer `REFERABLE` or filter rules for the affected SubmodelElements instead of granting the entire Submodel.
+
+The examples below separate the access policy for a requester from the deployment used to host the DPP and AAS. Examples 1 to 4 illustrate stakeholder access. Examples 5 to 8 illustrate service-provider and economic-operator access in three alternative deployments. Select the rules needed for the deployment; these examples are not a policy to install unchanged.
+
+[cols="1,2,3,2",options="header"]
+|===
+| Example | Requester | Permission in this example | Workflow
+| <<dpp-rule-public-read,1>> | Public user | Read Technical Data and Product Carbon Footprint | <<image-dpp-public-read,Public read>>
+| <<dpp-rule-recycler-read,2>> | Recycler | Read Technical Data, Product Carbon Footprint, Product Condition, and Circularity | <<image-dpp-authenticated-read,Authenticated read>>
+| <<dpp-rule-recycler-update,3>> | Delegated recycler | Update Product Condition | <<image-dpp-recycler-update,Recycler update>>
+| <<dpp-rule-authority-read,4>> | Market surveillance authority | Read all five illustrated Submodel types | <<image-dpp-authenticated-read,Authenticated read>>
+| <<dpp-rule-provider-read,5>> | External DPP service provider | Read all five illustrated Submodel types | <<image-dpp-service-provider-update,Scenario A>>
+| <<dpp-rule-provider-update,6>> | Delegated DPP service provider | Update Product Condition | <<image-dpp-service-provider-update,Scenario A>>
+| <<dpp-rule-tenant-operator,7>> | Tenant economic operator | Create, read, and update within its repository partition | <<image-dpp-economic-operator-update,Scenario B>>
+| <<dpp-rule-self-hosted-operator,8>> | Self-hosted economic operator | Create, read, and update through its repository routes | <<image-dpp-economic-operator-self-hosted-update,Scenario C>>
+|===
+
+==== Shared object definitions and rule structure
+
+The rule blocks refer to the following object groups with `USEOBJECTS`. Include the required definitions when assembling a policy from the examples.
+`BatteryPassport-Submodels` selects candidate Submodels for examples 1 to 6; each rule's `FORMULA` restricts them by `semanticId`.
+`Submodel-Repository-Routes` selects the repository routes used in examples 7 and 8.
 
 [source,bnf]
 ----
@@ -115,7 +139,20 @@ DEFOBJECTS "BatteryPassport-Submodels"
 DEFOBJECTS "Submodel-Repository-Routes"
   ROUTE "/submodels"
   ROUTE "/submodels/*"
+----
 
+In each rule, `ATTRIBUTES` lists the inputs used for access control, `RIGHTS` lists the permitted operations, and `OBJECTS` selects the targets. `FORMULA` states the conditions under which `ACCESS: ALLOW` applies. Claims come from a validated access token. `GLOBAL(ANONYMOUS)` instead applies to calls without a token. An operation remains denied unless an applicable rule permits it.
+
+The standard route literals are `/submodels` and `/submodels/*`. A deployment-specific tenant prefix belongs to the server base URL and is not part of these literals. The route definitions alone do not isolate tenants; scenario B explains the required partition selection.
+
+[[dpp-rule-public-read]]
+==== Example 1: public user reads public Battery Passport data
+
+A public user requests a DPP by product ID. The DPP service calls the AAS without an access token, as shown in <<image-dpp-public-read>>.
+This rule permits `READ` only for Technical Data and Product Carbon Footprint Submodels. It grants no write permission or anonymous access to `GetAllSubmodels`; the DPP service reads addressed Submodels that match the allowed semantics.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     GLOBAL(ANONYMOUS)
@@ -128,7 +165,16 @@ ACCESSRULE:
       $sm#semanticId $eq "https://admin-shell.io/idta/digitalbatterypassport/TechnicalData/1/0",
       $sm#semanticId $eq "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0"
     )
+----
 
+[[dpp-rule-recycler-read]]
+==== Example 2: recycler reads data needed for recycling
+
+An authenticated recycler requests the Battery Passport. The token contains `Role = "recycler"`.
+This rule permits `READ` on Technical Data, Product Carbon Footprint, Product Condition, and Circularity Submodels. It does not grant update permission. The AAS authorization step in <<image-dpp-authenticated-read>> applies this rule when the requester is a recycler.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     CLAIM("Role")
@@ -146,7 +192,18 @@ ACCESSRULE:
         $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity"
       )
     )
+----
 
+[[dpp-rule-recycler-update]]
+==== Example 3: delegated recycler updates Product Condition
+
+A recycler records a change to the battery's condition. The economic operator remains responsible for the Battery Passport information and can authorize another operator to act on its behalf.
+This rule requires both `Role = "recycler"` and `DppUpdateAuthorized = "true"`. It permits `UPDATE` only on the Product Condition Submodel, as shown in <<image-dpp-recycler-update>>. Read access is granted separately by <<dpp-rule-recycler-read,example 2>>.
+
+The permission flag and semantic identifier do not identify the products covered by the delegation. A deployment also needs to restrict the selected objects to those products; the recycler role alone is insufficient.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     CLAIM("Role")
@@ -161,7 +218,16 @@ ACCESSRULE:
       CLAIM("DppUpdateAuthorized") $eq "true",
       $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.1#ProductCondition"
     )
+----
 
+[[dpp-rule-authority-read]]
+==== Example 4: market surveillance authority reads the Battery Passport
+
+An authority requests Battery Passport information using a token with `Role = "market-surveillance-authority"`.
+This rule permits `READ` on Digital Nameplate, Technical Data, Product Carbon Footprint, Product Condition, and Circularity Submodels. It grants no write permission. The exchange follows <<image-dpp-authenticated-read>>, with the authority role selecting this rule instead of the recycler rule.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     CLAIM("Role")
@@ -180,7 +246,18 @@ ACCESSRULE:
         $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity"
       )
     )
+----
 
+[[dpp-rule-provider-read]]
+==== Example 5: external DPP service provider reads operator-hosted data (scenario A)
+
+The economic operator hosts the AAS. An external DPP service provider reads the AAS data to compose a DPP, using a token issued by an IAM trusted by that AAS.
+This rule requires `Role = "dpp-service-provider"` and permits `READ` on the five illustrated Submodel types. It covers the read path in <<image-dpp-service-provider-update>>. The separate update rule is <<dpp-rule-provider-update,example 6>>.
+
+These permissions belong to the provider. For calls on behalf of a requester, the implementation also needs to preserve that requester's restrictions. Delegating the requester's token or appropriately scoped claims lets the AAS apply requester-specific rules instead.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     CLAIM("Role")
@@ -199,7 +276,17 @@ ACCESSRULE:
         $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity"
       )
     )
+----
 
+[[dpp-rule-provider-update]]
+==== Example 6: delegated DPP service provider updates Product Condition (scenario A)
+
+In the same deployment as <<dpp-rule-provider-read,example 5>>, the provider updates Product Condition on the economic operator's behalf.
+This rule requires `Role = "dpp-service-provider"` and `DppUpdateAuthorized = "true"`. It permits `UPDATE` only on Product Condition and covers the update path in <<image-dpp-service-provider-update>>.
+As in <<dpp-rule-recycler-update,example 3>>, the deployment needs an object scope limited to the products covered by the delegation; the permission flag does not supply that scope.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     CLAIM("Role")
@@ -214,7 +301,18 @@ ACCESSRULE:
       CLAIM("DppUpdateAuthorized") $eq "true",
       $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.1#ProductCondition"
     )
+----
 
+[[dpp-rule-tenant-operator]]
+==== Example 7: economic operator manages data in a hosted tenant partition (scenario B)
+
+A DPP service provider hosts both the DPP service and the AAS for several economic operators. An operator creates, reads, or updates its own data through the provider's DPP service, as shown in <<image-dpp-economic-operator-update>>.
+This rule requires `Role = "tenant-economic-operator"` and `tenant = "example-tenant"`. It permits `CREATE`, `READ`, and `UPDATE` on the configured Submodel-repository routes; it grants no `DELETE` permission.
+
+Before evaluating the route rule, the AAS maps the validated tenant claim to a trusted tenant-specific partition or object scope. Merely checking the claim does not provide isolation. The example is instantiated for the configured tenant and applies only within that partition.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     CLAIM("Role")
@@ -228,7 +326,16 @@ ACCESSRULE:
       CLAIM("Role") $eq "tenant-economic-operator",
       CLAIM("tenant") $eq "example-tenant"
     )
+----
 
+[[dpp-rule-self-hosted-operator]]
+==== Example 8: economic operator manages its own DPP and AAS (scenario C)
+
+An economic operator hosts its own DPP and AAS services. Its authenticated operator uses the DPP service to create, read, or update data, as shown in <<image-dpp-economic-operator-self-hosted-update>>.
+This rule requires `Role = "self-hosted-economic-operator"` and permits `CREATE`, `READ`, and `UPDATE` on its Submodel-repository routes. It grants no `DELETE` permission. Unlike examples 1 to 6, this is a repository-route grant, not a restriction to the listed Battery Passport semantic identifiers.
+
+[source,bnf]
+----
 ACCESSRULE:
   ATTRIBUTES:
     CLAIM("Role")
@@ -240,17 +347,9 @@ ACCESSRULE:
     CLAIM("Role") $eq "self-hosted-economic-operator"
 ----
 
-The first four rules are stakeholder examples: public read, recycler read, delegated recycler update, and market-surveillance-authority read. The public policy grants neither `UPDATE` nor anonymous access to `GetAllSubmodels`. A DPP service that handles a public request calls the AAS without an access token and reads only Submodels authorized by their semantics. The recycler update example is limited to the instance-level Product Condition Submodel and additionally requires a trusted `DppUpdateAuthorized` claim. A recycler role alone does not grant update authority. The economic operator remains responsible for the Battery Passport information and can authorize another operator to act on its behalf.
+==== Reading a historical version
 
-The `DppUpdateAuthorized` example checks a permission flag and a Submodel semantic identifier; it does not identify the products covered by a delegation. A deployment also needs to restrict the selected objects to those products.
-
-The remaining rules cover three alternative deployments. An implementation configures only the rules and roles for its deployment:
-
-. In scenario A, the economic operator hosts the AAS and an external DPP service provider accesses it. The provider obtains an access token from an IAM trusted by the economic operator's AAS. The example grants the provider `READ` on the illustrated DPP Submodels and `UPDATE` only on the Product Condition Submodel when the token also carries the trusted `DppUpdateAuthorized` claim. An implementation that delegates the original requester's token or claims can apply the requester-specific rules instead.
-. In scenario B, a DPP service provider hosts both the DPP and AAS systems for an economic operator as a tenant. The provider IAM issues an authenticated token containing the economic-operator role and tenant claim. The example rule is instantiated per tenant and grants `CREATE`, `READ`, and `UPDATE` only within that tenant's configured Submodel-repository partition.
-. In scenario C, the economic operator hosts its own DPP and AAS systems. Its authenticated operator role receives `CREATE`, `READ`, and `UPDATE` on its Submodel-repository routes.
-
-The standard AAS route literals remain `/submodels` for collection operations and `/submodels/*` for addressed Submodels and their child resources. A deployment-specific tenant prefix belongs to the server base URL and is not part of the standard route literal. In a shared endpoint, the AAS implementation maps the authenticated tenant claim to a trusted tenant-specific partition or object scope before it evaluates the route rule. Merely carrying a tenant claim without using it for that isolation is insufficient. Access remains deny-by-default for every operation and object not covered by an applicable rule.
+<<image-dpp-historical-read>> shows a read by product ID and date. Its public path uses the read permission from <<dpp-rule-public-read,example 1>>; its authenticated path can use <<dpp-rule-recycler-read,example 2>> or <<dpp-rule-authority-read,example 4>>, depending on the requester. The AAS authorizes access to the selected version. These examples do not define a separate policy for historical access.
 
 == Logical capability view
 
@@ -303,12 +402,16 @@ The proposal uses the normal DPP read endpoints, without adding `/$sign` or `/$s
 
 The diagrams illustrate the requester, DPP-facing components, and AAS authorization point. The read diagrams use the <<dpp-response-signing,proposed HTTP response-signing approach>>. Authentication exchanges are schematic; they do not prescribe an identity protocol.
 
+The AAS authorization step uses <<dpp-rule-public-read,example 1>>.
+
 .Public access: read DPP by product ID
 [[image-dpp-public-read]]
 [plantuml,dpp-public-read,svg]
 ....
 include::partial$diagrams/dpp-public-read.puml[]
 ....
+
+The AAS selects the rule for the authenticated role: <<dpp-rule-recycler-read,example 2>> for a recycler or <<dpp-rule-authority-read,example 4>> for a market surveillance authority.
 
 .Authenticated access: read DPP by product ID
 [[image-dpp-authenticated-read]]
@@ -317,12 +420,16 @@ include::partial$diagrams/dpp-public-read.puml[]
 include::partial$diagrams/dpp-authenticated-read.puml[]
 ....
 
+The AAS checks the delegated update permission from <<dpp-rule-recycler-update,example 3>>. A prior read uses <<dpp-rule-recycler-read,example 2>>.
+
 .Authenticated access: authorized recycler updates Product Condition data
 [[image-dpp-recycler-update]]
 [plantuml,dpp-recycler-update,svg]
 ....
 include::partial$diagrams/dpp-recycler-update.puml[]
 ....
+
+The public path relates to <<dpp-rule-public-read,example 1>>; authenticated reads relate to <<dpp-rule-recycler-read,example 2>> or <<dpp-rule-authority-read,example 4>>. Selecting an earlier version does not bypass authorization.
 
 .Public or authenticated access: read DPP by product ID and date
 [[image-dpp-historical-read]]
@@ -331,6 +438,8 @@ include::partial$diagrams/dpp-recycler-update.puml[]
 include::partial$diagrams/dpp-historical-read.puml[]
 ....
 
+The provider read and update paths use <<dpp-rule-provider-read,example 5>> and <<dpp-rule-provider-update,example 6>>, respectively.
+
 .Scenario A: economic operator hosts the AAS, external DPP service provider accesses it
 [[image-dpp-service-provider-update]]
 [plantuml,dpp-service-provider-update,svg]
@@ -338,12 +447,16 @@ include::partial$diagrams/dpp-historical-read.puml[]
 include::partial$diagrams/dpp-service-provider-update.puml[]
 ....
 
+<<dpp-rule-tenant-operator,Example 7>> applies after the AAS selects the tenant partition.
+
 .Scenario B: DPP service provider hosts DPP and AAS for a tenant economic operator
 [[image-dpp-economic-operator-update]]
 [plantuml,dpp-economic-operator-update,svg]
 ....
 include::partial$diagrams/dpp-economic-operator-update.puml[]
 ....
+
+<<dpp-rule-self-hosted-operator,Example 8>> grants the operator access to its repository routes.
 
 .Scenario C: economic operator hosts its own DPP and AAS
 [[image-dpp-economic-operator-self-hosted-update]]

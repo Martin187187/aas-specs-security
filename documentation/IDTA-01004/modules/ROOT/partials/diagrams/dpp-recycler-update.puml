@@ -14,9 +14,9 @@ participant "AAS service" as AAS #D9EAF7
 User -> DPP : Update authorized Product Condition data
 DPP -> IAM : Authenticate requester
 IAM --> DPP : Token with recycler role and\nDPP update authorization
-DPP -> AAS : Update permitted Product Condition data
-AAS -> AAS : Authorize and modify data
+DPP -> AAS : Update Product Condition with token
+AAS -> AAS : Validate access token\nExample 3: check recycler role,\nupdate permission, and object scope
 AAS --> DPP : Updated data
-DPP -> DPP : Perform applicable DPP responsibilities
+DPP -> DPP : Record the authorized change
 DPP --> User : Updated data
 @enduml
