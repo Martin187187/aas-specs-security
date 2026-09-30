@@ -16,8 +16,8 @@ participant "AAS service" as AAS #D9EAF7
 
 User -> DPP : Read DPP by product ID\nAccept-Signature (optional)
 DPP -> AAS : Read public DPP data without access token
-AAS -> AAS : Example 1: apply GLOBAL(ANONYMOUS)\nRead permitted Submodels
-AAS --> DPP : DPP data
+AAS -> AAS : Example 1: apply GLOBAL(ANONYMOUS)\nRead Technical Data and Carbon Footprint
+AAS --> DPP : Permitted Submodel data
 DPP -> DPP : Sign response only when requested
 DPP --> User : DPP data\nContent-Digest + Signature-Input + Signature (when requested)
 @enduml
