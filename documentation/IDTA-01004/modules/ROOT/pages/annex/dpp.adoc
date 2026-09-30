@@ -106,7 +106,15 @@ In the illustrated access model, the AAS Access Rule Model performs authorizatio
 
 The following examples use the AAS Access Rule Model to grant access to Battery Passport Submodels or Submodel-repository routes. Applicable legislation determines which actors can read or modify which data; these examples do not define a general Battery Passport policy.
 
-The examples use the primary `semanticId` values of published Battery Passport Submodel Templates: link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-1/1.0/index.html[IDTA-02035-1 Digital Nameplate], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-3/1.0/index.html[IDTA-02035-3 Product Carbon Footprint], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-4/1.0.1/index.html[IDTA-02035-4 Technical Data], link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-5/1.0.1/index.html[IDTA-02035-5 Product Condition], and link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02-035-7/1.0.1/index.html[IDTA-02035-7 Circularity].
+The examples use the primary Submodel `semanticId` values defined in the following published Battery Passport Submodel Templates:
+
+* link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-1/1.0/index.html#_properties_of_the_submodel_batterynameplate[IDTA-02035-1 Digital Nameplate, version 1.0].
+* link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-3/1.0/index.html#_properties_of_the_submodel_carbonfootprint[IDTA-02035-3 Product Carbon Footprint, version 1.0].
+* link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-4/1.0.1/index.html#_submodel_technicaldata[IDTA-02035-4 Technical Data, version 1.0.1].
+* link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-5/1.0.2/index.html#_properties_of_the_submodel_productcondition[IDTA-02035-5 Product Condition, version 1.0.2].
+* link:https://industrialdigitaltwin.io/idta-submodel-templates/IDTA-02035-7/1.0.1/index.html#_properties_of_the_submodel_circularity[IDTA-02035-7 Circularity, version 1.0.1].
+
+The rules compare the exact semantic identifiers; they do not retrieve them as web pages. The links above lead to their definitions. A template's document version can differ from the version in its semantic identifier: Circularity version 1.0.1 retains `urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity`. Deployments using other template versions need to check the corresponding identifiers before applying these rules.
 
 `IDENTIFIABLE $sm("*")` selects candidate Submodels without relying on their instance identifiers or `idShort` paths; `$sm#semanticId` then restricts the rule to instances of the intended templates. The templates define data semantics, not regulatory access classes. A deployment therefore verifies the illustrative grouping against the applicable access-rights specification. If different access classes coexist within one Submodel, the deployment defines finer `REFERABLE` or filter rules for the affected SubmodelElements instead of granting the entire Submodel.
 
@@ -188,7 +196,7 @@ ACCESSRULE:
       $or(
         $sm#semanticId $eq "https://admin-shell.io/idta/digitalbatterypassport/TechnicalData/1/0",
         $sm#semanticId $eq "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0",
-        $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.1#ProductCondition",
+        $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.2#ProductCondition",
         $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity"
       )
     )
@@ -216,7 +224,7 @@ ACCESSRULE:
     $and(
       CLAIM("Role") $eq "recycler",
       CLAIM("DppUpdateAuthorized") $eq "true",
-      $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.1#ProductCondition"
+      $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.2#ProductCondition"
     )
 ----
 
@@ -242,7 +250,7 @@ ACCESSRULE:
         $sm#semanticId $eq "https://admin-shell.io/idta/digitalbatterypassport/nameplate/1/0/Nameplate",
         $sm#semanticId $eq "https://admin-shell.io/idta/digitalbatterypassport/TechnicalData/1/0",
         $sm#semanticId $eq "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0",
-        $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.1#ProductCondition",
+        $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.2#ProductCondition",
         $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity"
       )
     )
@@ -272,7 +280,7 @@ ACCESSRULE:
         $sm#semanticId $eq "https://admin-shell.io/idta/digitalbatterypassport/nameplate/1/0/Nameplate",
         $sm#semanticId $eq "https://admin-shell.io/idta/digitalbatterypassport/TechnicalData/1/0",
         $sm#semanticId $eq "https://admin-shell.io/idta/CarbonFootprint/CarbonFootprint/1/0",
-        $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.1#ProductCondition",
+        $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.2#ProductCondition",
         $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.circularity:1.0.0#Circularity"
       )
     )
@@ -299,7 +307,7 @@ ACCESSRULE:
     $and(
       CLAIM("Role") $eq "dpp-service-provider",
       CLAIM("DppUpdateAuthorized") $eq "true",
-      $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.1#ProductCondition"
+      $sm#semanticId $eq "urn:samm:io.admin-shell.idta.batterypass.product_condition:1.0.2#ProductCondition"
     )
 ----
 
