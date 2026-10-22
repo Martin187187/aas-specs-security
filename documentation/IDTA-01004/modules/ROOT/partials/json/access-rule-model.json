@@ -314,7 +314,7 @@
             "required": [
               "name"
             ],
-            "oneOf": [
+            "anyOf": [
               {
                 "required": [
                   "objects"
