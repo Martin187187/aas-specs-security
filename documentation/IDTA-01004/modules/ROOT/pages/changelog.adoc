@@ -11,6 +11,12 @@ SPDX-License-Identifier: CC-BY-4.0
 [[change-notes]]
 = Change Notes
 
+== Changes w.r.t. V3.1.1 vs. V3.1.0
+
+Bugfixes:
+
+* fix: Aligned the JSON Schema for `DEFOBJECTS` with the BNF grammar so object groups can combine direct `REFERABLE` objects and `USEOBJECTS` references (https://github.com/admin-shell-io/aas-specs-security/pull/101).
+
 == Changes w.r.t. V3.1 vs. V3.0.2
 
 Major Changes:
